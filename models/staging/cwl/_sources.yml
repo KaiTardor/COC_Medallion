@@ -2,7 +2,7 @@ version: 2
 
 sources:
   - name: cwl_bronze
-    database: "{{ env_var('DBT_COC_DB') }}"
+    database: "{{ env_var('DBT_COC_BRONZE_DB') }}"
     schema: BRONZE
     tables:
       - name: groups

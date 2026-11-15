@@ -38,5 +38,5 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   coc_medallion:
     staging:
-      +database: "{{ env_var('DBT_COC_DB') }}"
+      +database: "{{ env_var('DBT_COC_SILVER_DB') }}"
       +materialized: view

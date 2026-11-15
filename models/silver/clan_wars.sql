@@ -13,15 +13,25 @@ with cwl_wars as (
 
 sides as (
     select
-        season, group_id, war_tag, round_number, team_size,
-        clan, opponent as rival
+        season, 
+        group_id, 
+        war_tag, 
+        round_number, 
+        team_size,
+        clan, 
+        opponent as rival
     from cwl_wars
 
     union all
 
     select
-        season, group_id, war_tag, round_number, team_size,
-        opponent as clan, clan as rival
+        season, 
+        group_id, 
+        war_tag, 
+        round_number, 
+        team_size,
+        opponent as clan, 
+        clan as rival
     from cwl_wars
 ),
 

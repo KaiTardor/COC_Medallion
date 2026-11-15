@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: cwl_clan_performance
+    description: "Una fila por temporada, grupo y clan. Resume victorias, destrucción y eficiencia ofensiva de un clan en la CWL."
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [season, group_id, clan_tag]
+    columns:
+      - {name: season, data_tests: [not_null]}
+      - {name: group_id, data_tests: [not_null]}
+      - {name: clan_tag, data_tests: [not_null]}
+
+  - name: war_format_comparison
+    description: "Una fila por clan y mes con datos en CWL y guerras normales. 
+      Las diferencias se expresan en puntos porcentuales, como CWL menos normales."
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [season, clan_tag]
+    columns:
+      - {name: season, data_tests: [not_null]}
+      - {name: clan_tag, data_tests: [not_null]}
+
+  - name: town_hall_matchups
+    description: "Una fila por temporada, división y pareja de ayuntamientos para comparar triples, 
+      estrellas y destrucción en ataques de CWL."
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [season, division_id, attacker_th, defender_th]
+    columns:
+      - {name: season, data_tests: [not_null]}
+      - {name: division_id, data_tests: [not_null]}
+      - {name: attacker_th, data_tests: [not_null]}
+      - {name: defender_th, data_tests: [not_null]}
+      - name: matchup
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['down-hit', 'same-TH', 'up-hit']

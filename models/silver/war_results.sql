@@ -36,17 +36,37 @@ normal as (
 
 combined as (
     select
-        season, war_type, war_id, group_id, round_number, clan_tag,
-        opponent_tag, team_size, attacks_used, attacks_available,
-        stars, destruction_pct, result
+        season, 
+        war_type, 
+        war_id, 
+        group_id, 
+        round_number, 
+        clan_tag,
+        opponent_tag, 
+        team_size, 
+        attacks_used, 
+        attacks_available,
+        stars, 
+        destruction_pct, 
+        result
     from cwl
 
     union all
 
     select
-        season, war_type, war_id, group_id, round_number, clan_tag,
-        opponent_tag, team_size, attacks_used, attacks_available,
-        stars, destruction_pct, result
+        season, 
+        war_type, 
+        war_id, 
+        group_id, 
+        round_number, 
+        clan_tag,
+        opponent_tag, 
+        team_size, 
+        attacks_used, 
+        attacks_available,
+        stars, 
+        destruction_pct, 
+        result
     from normal
 )
 

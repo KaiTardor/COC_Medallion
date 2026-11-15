@@ -12,8 +12,12 @@ with participants as (
 
 attackers as (
     select
-        season, war_tag, clan_tag, player_tag,
-        town_hall_level, attacks_payload
+        season, 
+        war_tag, 
+        clan_tag, 
+        player_tag,
+        town_hall_level, 
+        attacks_payload
     from participants
     where attacks_used > 0
 ),

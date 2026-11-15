@@ -43,3 +43,6 @@ models:
     silver:
       +database: "{{ env_var('DBT_COC_SILVER_DB') }}"
       +materialized: table
+    gold:
+      +database: "{{ env_var('DBT_COC_GOLD_DB') }}"
+      +materialized: table

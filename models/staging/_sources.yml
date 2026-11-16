@@ -11,3 +11,5 @@ sources:
         identifier: CWL_WARS_RAW
       - name: normal_wars
         identifier: NORMAL_WARS_RAW
+      - name: normal_war_coverage
+        identifier: NORMAL_WAR_COVERAGE_RAW

@@ -22,6 +22,17 @@ models:
         description: Ruta del archivo JSON de origen en la captura local.
       - name: payload
         description: JSON del grupo, con los clanes, sus jugadores inscritos y las rondas.
+      - name: id_season
+        description: Identificador determinista a partir de la clave del origen.
+        data_tests:
+          - not_null
+      - name: id_division
+        description: Identificador determinista a partir de la clave del origen.
+      - name: id_group
+        description: Identificador determinista a partir de la clave del origen.
+        data_tests:
+          - not_null
+          - unique
 
   - name: stg_cwl_wars
     description: Una fila por guerra de CWL. Expone el grupo, la ronda y los dos clanes implicados, tb conserva
@@ -58,6 +69,19 @@ models:
         description: Ruta del archivo JSON de origen.
       - name: payload
         description: JSON de la guerra, con los dos bandos, sus alineaciones y sus ataques.
+      - name: id_season
+        description: Identificador determinista a partir de la clave del origen.
+        data_tests:
+          - not_null
+      - name: id_group
+        description: Identificador determinista a partir de la clave del origen.
+        data_tests:
+          - not_null
+      - name: id_cwl_war
+        description: Identificador determinista a partir de la clave del origen.
+        data_tests:
+          - not_null
+          - unique
 
   - name: stg_normal_wars
     description: Una fila por guerra normal y clan observado. Expone el resultado y las metricas desde la perspectiva
@@ -106,3 +130,33 @@ models:
         description: Ruta del archivo local del historial del clan del que salió el registro.
       - name: payload
         description: JSON de la entrada del historial, con el resumen de la guerra por clan.
+      - name: id_clan
+        description: Identificador determinista a partir de la clave del origen.
+        data_tests:
+          - not_null
+      - name: id_opponent_clan
+        description: Identificador determinista a partir de la clave del origen.
+        data_tests:
+          - not_null
+      - name: id_normal_war
+        description: Identificador determinista a partir de la clave del origen.
+        data_tests:
+          - not_null
+      - name: end_time_key
+        description: Representación canónica UTC de la fecha y hora de cierre.
+      - name: clan_a_tag
+        description: Primer tag de clan al ordenar ambos bandos.
+      - name: clan_b_tag
+        description: Segundo tag de clan al ordenar ambos bandos.
+
+  - name: stg_normal_war_coverage
+    description: Una fila por consulta de historial normal, con su clan, mes y estado.
+    columns:
+      - name: season
+        description: Mes del que se pidió el historial.
+      - name: clan_tag
+        description: Tag original del clan consultado.
+      - name: id_clan
+        description: ID determinista calculado a partir del tag del clan.
+        data_tests:
+          - not_null

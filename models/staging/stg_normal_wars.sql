@@ -19,6 +19,18 @@ renamed as (
         record:source_path::varchar as source_path,
         record:payload as payload
     from source
+),
+
+keyed as (
+    select
+        renamed.*,
+        {{ coc_id('clan', ['clan_tag']) }} as id_clan,
+        {{ coc_id('clan', ['opponent_tag']) }} as id_opponent_clan,
+        to_char(convert_timezone('UTC', end_time_utc), 'YYYY-MM-DD"T"HH24:MI:SS.FF9"Z"') as end_time_key,
+        least(clan_tag, opponent_tag) as clan_a_tag,
+        greatest(clan_tag, opponent_tag) as clan_b_tag,
+        {{ coc_id('normal_war', ['end_time_key', 'clan_a_tag', 'clan_b_tag']) }} as id_normal_war
+    from renamed
 )
 
-select * from renamed
+select * from keyed

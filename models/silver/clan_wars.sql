@@ -1,10 +1,6 @@
-with cwl_wars as (
+with wars as (
     select
-        season,
-        group_id,
-        war_tag,
-        round_number,
-        team_size,
+        id_cwl_war,
         payload:clan as clan,
         payload:opponent as opponent
     from {{ ref('stg_cwl_wars') }}
@@ -12,36 +8,18 @@ with cwl_wars as (
 ),
 
 sides as (
-    select
-        season, 
-        group_id, 
-        war_tag, 
-        round_number, 
-        team_size,
-        clan, 
-        opponent as rival
-    from cwl_wars
+    select id_cwl_war, clan, opponent as rival
+    from wars
 
     union all
 
-    select
-        season, 
-        group_id, 
-        war_tag, 
-        round_number, 
-        team_size,
-        opponent as clan, 
-        clan as rival
-    from cwl_wars
+    select id_cwl_war, opponent as clan, clan as rival
+    from wars
 ),
 
 scores as (
     select
-        season,
-        group_id,
-        war_tag,
-        round_number,
-        team_size,
+        id_cwl_war,
         clan:tag::varchar as clan_tag,
         rival:tag::varchar as opponent_tag,
         clan:attacks::integer as attacks_used,
@@ -54,19 +32,15 @@ scores as (
 
 with_results as (
     select
-        season,
-        group_id,
-        war_tag,
-        round_number,
-        team_size,
-        clan_tag,
-        opponent_tag,
+        {{ coc_id('clan', ['clan_tag']) }} as id_clan,
+        {{ coc_id('clan', ['opponent_tag']) }} as id_opponent_clan,
+        {{ coc_id('clan_war', ['id_cwl_war', 'id_clan']) }} as id_clan_war,
+        id_cwl_war,
         attacks_used,
         stars,
         opponent_stars,
         destruction_pct,
         opponent_destruction_pct,
-        team_size as attacks_available,
         case
             when stars is null or opponent_stars is null then null
             when stars > opponent_stars then 'win'

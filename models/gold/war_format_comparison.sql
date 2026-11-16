@@ -1,20 +1,14 @@
 with war_results as (
-    select
-        season,
-        clan_tag,
-        war_type,
-        result,
-        destruction_pct,
-        attacks_used,
-        attacks_available
-    from {{ ref('war_results') }}
+    select season, id_clan, war_type, result, destruction_pct,
+        attacks_used, attacks_available
+    from {{ ref('fct_war_results') }}
     where war_type in ('cwl', 'normal')
 ),
 
 format_totals as (
     select
         season,
-        clan_tag,
+        id_clan,
         war_type,
         count(*) as wars_played,
         count(result) as wars_with_result,
@@ -29,13 +23,13 @@ format_totals as (
             then attacks_available
         end) as attacks_available
     from war_results
-    group by season, clan_tag, war_type
+    group by season, id_clan, war_type
 ),
 
 format_metrics as (
     select
         season,
-        clan_tag,
+        id_clan,
         war_type,
         wars_played,
         avg_destruction_pct,
@@ -47,7 +41,7 @@ format_metrics as (
 comparison as (
     select
         c.season,
-        c.clan_tag,
+        cl.clan_tag,
         c.wars_played as cwl_wars_played,
         n.wars_played as normal_wars_played,
         c.win_rate_pct as cwl_win_rate_pct,
@@ -58,14 +52,15 @@ comparison as (
         c.avg_destruction_pct - n.avg_destruction_pct as destruction_diff_pp,
         c.attack_usage_pct as cwl_attack_usage_pct,
         n.attack_usage_pct as normal_attack_usage_pct,
-        c.attack_usage_pct - n.attack_usage_pct as attack_usage_diff_pp
+        c.attack_usage_pct - n.attack_usage_pct as attack_usage_diff_pp,
+        c.id_clan
     from format_metrics c
     inner join format_metrics n
         on c.season = n.season
-        and c.clan_tag = n.clan_tag
+        and c.id_clan = n.id_clan
         and n.war_type = 'normal'
+    left join {{ ref('dim_clan') }} cl on c.id_clan = cl.id_clan
     where c.war_type = 'cwl'
 )
 
-select *
-from comparison
+select * from comparison

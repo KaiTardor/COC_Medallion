@@ -1,33 +1,27 @@
 with cwl as (
     select
-        season,
+        {{ coc_id('war_result', ["'cwl'", 's.id_clan_war']) }} as id_war_result,
         'cwl' as war_type,
-        war_tag as war_id,
-        group_id,
-        round_number,
-        clan_tag,
-        opponent_tag,
-        team_size,
-        attacks_used,
-        attacks_available,
-        stars,
-        destruction_pct,
-        result
-    from {{ ref('clan_wars') }}
+        s.id_clan_war,
+        null::varchar as id_normal_war,
+        s.id_clan,
+        s.id_opponent_clan,
+        s.attacks_used,
+        s.stars,
+        s.destruction_pct,
+        s.result
+    from {{ ref('clan_wars') }} s
 ),
 
 normal as (
     select
-        season,
+        {{ coc_id('war_result', ["'normal'", 'id_normal_war', 'id_clan']) }} as id_war_result,
         'normal' as war_type,
-        war_id,
-        null::varchar as group_id,
-        null::integer as round_number,
-        clan_tag,
-        opponent_tag,
-        team_size,
+        null::varchar as id_clan_war,
+        id_normal_war,
+        id_clan,
+        id_opponent_clan,
         attacks_used,
-        team_size * attacks_per_member as attacks_available,
         stars,
         destruction_pct,
         result
@@ -35,39 +29,9 @@ normal as (
 ),
 
 combined as (
-    select
-        season, 
-        war_type, 
-        war_id, 
-        group_id, 
-        round_number, 
-        clan_tag,
-        opponent_tag, 
-        team_size, 
-        attacks_used, 
-        attacks_available,
-        stars, 
-        destruction_pct, 
-        result
-    from cwl
-
+    select * from cwl
     union all
-
-    select
-        season, 
-        war_type, 
-        war_id, 
-        group_id, 
-        round_number, 
-        clan_tag,
-        opponent_tag, 
-        team_size, 
-        attacks_used, 
-        attacks_available,
-        stars, 
-        destruction_pct, 
-        result
-    from normal
+    select * from normal
 )
 
 select * from combined

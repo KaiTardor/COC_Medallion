@@ -1,33 +1,24 @@
 with cwl_results as (
-    select
-        season, group_id, war_id, round_number, clan_tag,
-        result, destruction_pct, attacks_available
-    from {{ ref('war_results') }}
+    select season, id_group, id_cwl_war, id_clan, round_number, result,
+        destruction_pct, attacks_available
+    from {{ ref('fct_war_results') }}
     where war_type = 'cwl'
 ),
 
-cwl_groups as (
-    select season, group_id, division_id
-    from {{ ref('cwl_groups') }}
-),
-
-attacks as (
-    select season, war_tag, attacker_clan_tag
-    from {{ ref('attacks') }}
-),
-
 attacks_by_war as (
-    select season, war_tag, attacker_clan_tag as clan_tag, count(*) as attacks_used
-    from attacks
-    group by season, war_tag, attacker_clan_tag
+    select
+        id_cwl_war,
+        id_attacker_clan as id_clan,
+        count(*) as attacks_used
+    from {{ ref('fct_cwl_attacks') }}
+    group by id_cwl_war, id_attacker_clan
 ),
 
 round_totals as (
     select
         w.season,
-        w.group_id,
-        g.division_id,
-        w.clan_tag,
+        w.id_group,
+        w.id_clan,
         w.round_number,
         count(*) as wars_played,
         count(w.result) as wars_with_result,
@@ -37,44 +28,41 @@ round_totals as (
         sum(w.attacks_available) as attacks_available,
         sum(coalesce(a.attacks_used, 0)) as attacks_used
     from cwl_results w
-    left join cwl_groups g
-        on w.season = g.season and w.group_id = g.group_id
     left join attacks_by_war a
-        on w.season = a.season and w.war_id = a.war_tag and w.clan_tag = a.clan_tag
-    group by w.season, w.group_id, g.division_id, w.clan_tag, w.round_number
+        on w.id_cwl_war = a.id_cwl_war
+        and w.id_clan = a.id_clan
+    group by w.season, w.id_group, w.id_clan, w.round_number
 ),
 
 running_totals as (
     select
-        season, group_id, division_id, clan_tag, round_number,
-        wars_played, wars_with_result, wins, wars_with_destruction,
-        destruction_sum, attacks_available, attacks_used,
+        round_totals.*,
         sum(wars_played) over (
-            partition by season, group_id, clan_tag order by round_number
+            partition by id_group, id_clan order by round_number
             rows between unbounded preceding and current row
         ) as cumulative_wars_played,
         sum(wars_with_result) over (
-            partition by season, group_id, clan_tag order by round_number
+            partition by id_group, id_clan order by round_number
             rows between unbounded preceding and current row
         ) as cumulative_wars_with_result,
         sum(wins) over (
-            partition by season, group_id, clan_tag order by round_number
+            partition by id_group, id_clan order by round_number
             rows between unbounded preceding and current row
         ) as cumulative_wins,
         sum(wars_with_destruction) over (
-            partition by season, group_id, clan_tag order by round_number
+            partition by id_group, id_clan order by round_number
             rows between unbounded preceding and current row
         ) as cumulative_wars_with_destruction,
         sum(destruction_sum) over (
-            partition by season, group_id, clan_tag order by round_number
+            partition by id_group, id_clan order by round_number
             rows between unbounded preceding and current row
         ) as cumulative_destruction_sum,
         sum(attacks_available) over (
-            partition by season, group_id, clan_tag order by round_number
+            partition by id_group, id_clan order by round_number
             rows between unbounded preceding and current row
         ) as cumulative_attacks_available,
         sum(attacks_used) over (
-            partition by season, group_id, clan_tag order by round_number
+            partition by id_group, id_clan order by round_number
             rows between unbounded preceding and current row
         ) as cumulative_attacks_used
     from round_totals
@@ -82,22 +70,39 @@ running_totals as (
 
 metrics as (
     select
-        season, group_id, division_id, clan_tag, round_number,
-        wars_played, wars_with_result, wins, wars_with_destruction, destruction_sum,
-        attacks_available, attacks_used,
-        destruction_sum / nullif(wars_with_destruction, 0) as avg_destruction_pct,
-        100.0 * attacks_used / nullif(attacks_available, 0) as attack_usage_pct,
-        cumulative_wars_played, cumulative_wars_with_result, cumulative_wins,
-        cumulative_wars_with_destruction, cumulative_destruction_sum,
-        cumulative_attacks_available, cumulative_attacks_used,
-        100.0 * cumulative_wins / nullif(cumulative_wars_with_result, 0)
+        t.season,
+        g.group_id,
+        g.division_id,
+        c.clan_tag,
+        t.round_number,
+        t.wars_played,
+        t.wars_with_result,
+        t.wins,
+        t.wars_with_destruction,
+        t.destruction_sum,
+        t.attacks_available,
+        t.attacks_used,
+        t.destruction_sum / nullif(t.wars_with_destruction, 0) as avg_destruction_pct,
+        100.0 * t.attacks_used / nullif(t.attacks_available, 0) as attack_usage_pct,
+        t.cumulative_wars_played,
+        t.cumulative_wars_with_result,
+        t.cumulative_wins,
+        t.cumulative_wars_with_destruction,
+        t.cumulative_destruction_sum,
+        t.cumulative_attacks_available,
+        t.cumulative_attacks_used,
+        100.0 * t.cumulative_wins / nullif(t.cumulative_wars_with_result, 0)
             as cumulative_win_rate_pct,
-        cumulative_destruction_sum / nullif(cumulative_wars_with_destruction, 0)
+        t.cumulative_destruction_sum / nullif(t.cumulative_wars_with_destruction, 0)
             as cumulative_avg_destruction_pct,
-        100.0 * cumulative_attacks_used / nullif(cumulative_attacks_available, 0)
-            as cumulative_attack_usage_pct
-    from running_totals
+        100.0 * t.cumulative_attacks_used / nullif(t.cumulative_attacks_available, 0)
+            as cumulative_attack_usage_pct,
+        t.id_group,
+        g.id_division,
+        t.id_clan
+    from running_totals t
+    left join {{ ref('dim_cwl_group') }} g on t.id_group = g.id_group
+    left join {{ ref('dim_clan') }} c on t.id_clan = c.id_clan
 )
 
-select *
-from metrics
+select * from metrics

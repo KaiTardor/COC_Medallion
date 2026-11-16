@@ -17,4 +17,7 @@ renamed as (
     from source
 )
 
-select * from renamed
+select
+    renamed.*,
+    {{ coc_id('clan', ['renamed.clan_tag']) }} as id_clan
+from renamed

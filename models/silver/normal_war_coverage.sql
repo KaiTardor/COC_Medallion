@@ -1,7 +1,7 @@
 with staged_coverage as (
     select
         season,
-        clan_tag,
+        id_clan,
         fetched_at_utc,
         status,
         error_reason,
@@ -14,8 +14,9 @@ with staged_coverage as (
 
 coverage as (
     select
+        {{ coc_id('coverage', ['season', 'id_clan']) }} as id_coverage,
         season,
-        clan_tag,
+        id_clan,
         fetched_at_utc,
         status,
         error_reason,

@@ -1,144 +1,108 @@
 version: 2
 
 models:
+
   - name: stg_groups
-    description: "Es una fila por temporada y grupo de CWL. 
-      Expone los ids y la división del grupo y sirve para conservar el JSON con los clanes inscritos y las rondas."
+    description: Es una fila por temporada y grupo de CWL. Expone los ids y la división del grupo y sirve para
+      conservar el JSON con los clanes inscritos y las rondas.
     columns:
-      - {
-        name: season, 
-        description: "Temporada de CWL en formato AAAA-MM.", 
-        data_tests: [not_null]
-        }
-      - {
-        name: group_id, 
-        description: "Id del grupo dentro de la temporada especificada.",
-        data_tests: [not_null]}
-      - {
-        name: division_id, 
-        description: "Id de la division registrada para el grupo."
-        }
-      - {
-        name: division_name, 
-        description: "Nombre de la division registrada para el grupo."
-        }
-      - {
-        name: source_path, 
-        description: "Ruta del archivo JSON de origen en la captura local."}
-      - {
-        name: payload, 
-        description: "JSON del grupo, con los clanes, sus jugadores inscritos y las rondas."
-        }
+      - name: season
+        description: Temporada de CWL en formato AAAA-MM.
+        data_tests:
+          - not_null
+      - name: group_id
+        description: Id del grupo dentro de la temporada especificada.
+        data_tests:
+          - not_null
+      - name: division_id
+        description: Id de la division registrada para el grupo.
+      - name: division_name
+        description: Nombre de la division registrada para el grupo.
+      - name: source_path
+        description: Ruta del archivo JSON de origen en la captura local.
+      - name: payload
+        description: JSON del grupo, con los clanes, sus jugadores inscritos y las rondas.
 
   - name: stg_cwl_wars
-    description: "Una fila por guerra de CWL. 
-      Expone el grupo, la ronda y los dos clanes implicados, tb conserva las alineaciones y los ataques."
+    description: Una fila por guerra de CWL. Expone el grupo, la ronda y los dos clanes implicados, tb conserva
+      las alineaciones y los ataques.
     columns:
-      - {
-        name: season, 
-        description: "Temporada de CWL en formato AAAA-MM.", 
-        data_tests: [not_null]
-        }
-      - {
-        name: war_tag, 
-        description: "Tag unico de la guerra de CWL asignado por la API.", 
-        data_tests: [not_null, unique]
-        }
-      - {
-        name: group_id, 
-        description: "Id del grupo al que pertenece la guerra en dicha temporada.", 
-        data_tests: [not_null]
-        }
-      - {
-        name: round_number, 
-        description: "Num de ronda de la guerra dentro del grupo."
-        }
-      - {
-        name: team_size, 
-        description: "Num de jugadores implicados en la guerra."
-        }
-      - {
-        name: war_state, 
-        description: "Estado de la guerra según la API. El valor warEnded indica que ha terminado."
-        }
-      - {
-        name: clan_tag, 
-        description: "Tag del clan enel JSON.", 
-        data_tests: [not_null]
-        }
-      - {
-        name: opponent_tag, 
-        description: "Tag del clan oponente en el JSON.", 
-        data_tests: [not_null]
-        }
-      - {
-        name: source_path, 
-        description: "Ruta del archivo JSON de origen."
-        }
-      - {
-        name: payload, 
-        description: "JSON de la guerra, con los dos bandos, sus alineaciones y sus ataques."
-        }
+      - name: season
+        description: Temporada de CWL en formato AAAA-MM.
+        data_tests:
+          - not_null
+      - name: war_tag
+        description: Tag unico de la guerra de CWL asignado por la API.
+        data_tests:
+          - not_null
+          - unique
+      - name: group_id
+        description: Id del grupo al que pertenece la guerra en dicha temporada.
+        data_tests:
+          - not_null
+      - name: round_number
+        description: Num de ronda de la guerra dentro del grupo.
+      - name: team_size
+        description: Num de jugadores implicados en la guerra.
+      - name: war_state
+        description: Estado de la guerra según la API. El valor warEnded indica que ha terminado.
+      - name: clan_tag
+        description: Tag del clan enel JSON.
+        data_tests:
+          - not_null
+      - name: opponent_tag
+        description: Tag del clan oponente en el JSON.
+        data_tests:
+          - not_null
+      - name: source_path
+        description: Ruta del archivo JSON de origen.
+      - name: payload
+        description: JSON de la guerra, con los dos bandos, sus alineaciones y sus ataques.
 
   - name: stg_normal_wars
-    description: "Una fila por guerra normal y clan observado. 
-      Expone el resultado y las metricas desde la perspectiva del clan cuyo historial se consultó."
+    description: Una fila por guerra normal y clan observado. Expone el resultado y las metricas desde la perspectiva
+      del clan cuyo historial se consultó.
     columns:
-      - {
-        name: season, 
-        description: "Mes de cierre de la guerra en UTC, en formato AAAA-MM.", 
-        data_tests: [not_null]
-        }
-      - {
-        name: war_id, 
-        description: "Clave generada con la fecha de cierre UTC y los dos tags ordenados. Comun a ambas perspectivas.", 
-        data_tests: [not_null]
-        }
-      - {
-        name: clan_tag, 
-        description: "Tag del clan cuyo historial se consultó.", 
-        data_tests: [not_null]
-        }
-      - {
-        name: opponent_tag, 
-        description: "Tag del clan rival en esa guerra.", 
-        data_tests: [not_null]}
-      - {
-        name: end_time_utc, 
-        description: "Fecha y hora de cierre de la guerra en UTC."
-        }
+      - name: season
+        description: Mes de cierre de la guerra en UTC, en formato AAAA-MM.
+        data_tests:
+          - not_null
+      - name: war_id
+        description: Clave generada con la fecha de cierre UTC y los dos tags ordenados. Comun a ambas perspectivas.
+        data_tests:
+          - not_null
+      - name: clan_tag
+        description: Tag del clan cuyo historial se consultó.
+        data_tests:
+          - not_null
+      - name: opponent_tag
+        description: Tag del clan rival en esa guerra.
+        data_tests:
+          - not_null
+      - name: end_time_utc
+        description: Fecha y hora de cierre de la guerra en UTC.
       - name: result
-        description: "Resultado desde la perspectiva del clan de la fila. Puede ser victoria (win), derrota (lose) o empate (tie)."
+        description: Resultado desde la perspectiva del clan de la fila. Puede ser victoria (win), derrota (lose)
+          o empate (tie).
         data_tests:
           - not_null
           - accepted_values:
               arguments:
-                values: ['win', 'lose', 'tie']
-      - {
-        name: team_size, 
-        description: "Num de jugadores participantes en cada bando."
-        }
-      - {
-        name: attacks_per_member, 
-        description: "Cupo de ataques por jugador alineado en esa guerra."
-        }
-      - {
-        name: attacks_used, 
-        description: "Num de ataques que realizó el clan de la fila."
-        }
-      - {
-        name: stars,
-        description: "Estrellas del clan de la fila en el marcador de la guerra."
-        }
-      - {
-        name: destruction_pct, 
-        description: "Porcentaje de destruccion del clan de la fila, en escala de 0 a 100."
-        }
-      - {
-        name: source_path, 
-        description: "Ruta del archivo local del historial del clan del que salió el registro."
-        }
-      - {
-        name: payload, 
-        description: "JSON de la entrada del historial, con el resumen de la guerra por clan."
-        }
+                values:
+                  - win
+                  - lose
+                  - tie
+      - name: team_size
+        description: Num de jugadores participantes en cada bando.
+      - name: attacks_per_member
+        description: Cupo de ataques por jugador alineado en esa guerra.
+      - name: attacks_used
+        description: Num de ataques que realizó el clan de la fila.
+      - name: stars
+        description: Estrellas del clan de la fila en el marcador de la guerra.
+      - name: destruction_pct
+        description: Porcentaje de destruccion del clan de la fila, en escala de 0 a 100.
+      - name: source_path
+        description: Ruta del archivo local del historial del clan del que salió el registro.
+      - name: payload
+        description: JSON de la entrada del historial, con el resumen de la guerra por clan.

@@ -1,43 +1,158 @@
 version: 2
 
 models:
+
   - name: cwl_clan_performance
-    description: "Una fila por temporada, grupo y clan. Resume victorias, destrucción y eficiencia ofensiva de un clan en la CWL."
+    description: Una fila por temporada, grupo y clan. Resume victorias, destrucción y eficiencia ofensiva de
+      un clan en la CWL.
     data_tests:
       - unique_key_columns:
           arguments:
-            column_names: [season, group_id, clan_tag]
+            column_names:
+              - season
+              - group_id
+              - clan_tag
     columns:
-      - {name: season, data_tests: [not_null]}
-      - {name: group_id, data_tests: [not_null]}
-      - {name: clan_tag, data_tests: [not_null]}
+      - name: season
+        data_tests:
+          - not_null
+      - name: group_id
+        data_tests:
+          - not_null
+      - name: clan_tag
+        data_tests:
+          - not_null
 
   - name: war_format_comparison
-    description: "Una fila por clan y mes con datos en CWL y guerras normales. 
-      Las diferencias se expresan en puntos porcentuales, como CWL menos normales."
+    description: Una fila por clan y mes con datos en CWL y guerras normales. Las diferencias se expresan en puntos
+      porcentuales, como CWL menos normales.
     data_tests:
       - unique_key_columns:
           arguments:
-            column_names: [season, clan_tag]
+            column_names:
+              - season
+              - clan_tag
     columns:
-      - {name: season, data_tests: [not_null]}
-      - {name: clan_tag, data_tests: [not_null]}
+      - name: season
+        data_tests:
+          - not_null
+      - name: clan_tag
+        data_tests:
+          - not_null
 
   - name: town_hall_matchups
-    description: "Una fila por temporada, división y pareja de ayuntamientos para comparar triples, 
-      estrellas y destrucción en ataques de CWL."
+    description: Una fila por temporada, división y pareja de ayuntamientos para comparar triples, estrellas y
+      destrucción en ataques de CWL.
     data_tests:
       - unique_key_columns:
           arguments:
-            column_names: [season, division_id, attacker_th, defender_th]
+            column_names:
+              - season
+              - division_id
+              - attacker_th
+              - defender_th
     columns:
-      - {name: season, data_tests: [not_null]}
-      - {name: division_id, data_tests: [not_null]}
-      - {name: attacker_th, data_tests: [not_null]}
-      - {name: defender_th, data_tests: [not_null]}
+      - name: season
+        data_tests:
+          - not_null
+      - name: division_id
+        data_tests:
+          - not_null
+      - name: attacker_th
+        data_tests:
+          - not_null
+      - name: defender_th
+        data_tests:
+          - not_null
       - name: matchup
         data_tests:
           - not_null
           - accepted_values:
               arguments:
-                values: ['down-hit', 'same-TH', 'up-hit']
+                values:
+                  - down-hit
+                  - same-TH
+                  - up-hit
+
+  - name: cwl_round_performance
+    description: Una fila por temporada, grupo, clan y ronda observada de CWL. Mide la evolución del clan con
+      resultados de la ronda y acumulados hasta ella.
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names:
+              - season
+              - group_id
+              - clan_tag
+              - round_number
+    columns:
+      - name: season
+        description: Temporada de CWL en formato AAAA-MM.
+        data_tests:
+          - not_null
+      - name: group_id
+        description: Id del grupo dentro de la temporada.
+        data_tests:
+          - not_null
+      - name: division_id
+        description: División de CWL en la que compitió el grupo.
+        data_tests:
+          - not_null
+      - name: clan_tag
+        description: Tag del clan al que corresponden las metricas.
+        data_tests:
+          - not_null
+      - name: round_number
+        description: Nums de ronda dentro del grupo.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  - 5
+                  - 6
+                  - 7
+                quote: false
+      - name: wars_played
+        description: Guerras observadas del clan en la ronda.
+      - name: wars_with_result
+        description: Guerras de la ronda con resultado conocido.
+      - name: wins
+        description: Victorias del clan en la ronda.
+      - name: wars_with_destruction
+        description: Guerras de la ronda con destrucción observada.
+      - name: destruction_sum
+        description: Suma de porcentajes de destrucción observados en la ronda.
+      - name: attacks_available
+        description: Cupo total de ataques del clan en la ronda.
+      - name: attacks_used
+        description: Número de ataques detallados observados en la ronda.
+      - name: avg_destruction_pct
+        description: Destrucción media por guerra de la ronda, de 0 a 100.
+      - name: attack_usage_pct
+        description: Porcentaje del cupo de ataques usado en la ronda, de 0 a 100.
+      - name: cumulative_wars_played
+        description: Guerras observadas del clan hasta esta ronda, incluida.
+      - name: cumulative_wars_with_result
+        description: Guerras con resultado conocido hasta esta ronda, incluida.
+      - name: cumulative_wins
+        description: Victorias acumuladas hasta esta ronda, incluida.
+      - name: cumulative_wars_with_destruction
+        description: Guerras con destrucción observada hasta esta ronda, incluida.
+      - name: cumulative_destruction_sum
+        description: Suma de porcentajes de destrucción hasta esta ronda, incluida.
+      - name: cumulative_attacks_available
+        description: Cupo total de ataques acumulado hasta esta ronda, incluida.
+      - name: cumulative_attacks_used
+        description: Ataques detallados observados hasta esta ronda, incluida.
+      - name: cumulative_win_rate_pct
+        description: Victorias divididas entre guerras con resultado conocido hasta esta ronda, de 0 a 100. Los
+          empates cuentan en el denominador.
+      - name: cumulative_avg_destruction_pct
+        description: Destrucción media por guerra observada hasta esta ronda, de 0 a 100.
+      - name: cumulative_attack_usage_pct
+        description: Ataques usados divididos entre el cupo acumulado hasta esta ronda, de 0 a 100.

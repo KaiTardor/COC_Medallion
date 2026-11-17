@@ -1,6 +1,6 @@
 with cwl_results as (
     select season, id_group, id_cwl_war, id_clan, result,
-        destruction_pct, attacks_available
+        destruction_pct, attacks_available, attacks_used
     from {{ ref('fct_war_results') }}
     where war_type = 'cwl'
 ),
@@ -9,7 +9,6 @@ attacks_by_war as (
     select
         id_cwl_war,
         id_attacker_clan as id_clan,
-        count(*) as attacks_used,
         count(stars) as scored_attacks,
         sum(stars) as attack_stars,
         count(case when stars = 3 then 1 end) as triples
@@ -26,8 +25,14 @@ season_totals as (
         count(w.result) as wars_with_result,
         count(case when w.result = 'win' then 1 end) as wins,
         avg(w.destruction_pct) as avg_destruction_pct,
-        sum(w.attacks_available) as attacks_available,
-        sum(coalesce(a.attacks_used, 0)) as attacks_used,
+        sum(case
+            when w.attacks_used is not null and w.attacks_available > 0
+            then w.attacks_available
+        end) as attacks_available,
+        sum(case
+            when w.attacks_used is not null and w.attacks_available > 0
+            then w.attacks_used
+        end) as attacks_used,
         sum(coalesce(a.scored_attacks, 0)) as scored_attacks,
         sum(coalesce(a.attack_stars, 0)) as attack_stars,
         sum(coalesce(a.triples, 0)) as triples

@@ -218,9 +218,9 @@ models:
       - name: avg_destruction_pct
         description: Destrucción media de las guerras con ese dato, de 0 a 100.
       - name: attacks_available
-        description: Cupo total del clan en las guerras observadas.
+        description: Cupo del clan sumado en las guerras con ataques de marcador informados y cupo positivo.
       - name: attacks_used
-        description: Ataques detallados registrados para el clan.
+        description: Ataques del clan según el marcador, sumados sobre las mismas guerras que el cupo.
       - name: scored_attacks
         description: Ataques detallados para los que se conoce el número de estrellas.
       - name: attack_stars
@@ -230,7 +230,7 @@ models:
       - name: win_rate_pct
         description: Porcentaje de victorias entre las guerras con resultado conocido.
       - name: attack_usage_pct
-        description: Porcentaje del cupo total utilizado en ataques registrados.
+        description: Ataques de marcador sobre el cupo de las guerras incluidas. Nulo si ninguna cumple.
       - name: stars_per_attack
         description: Media de estrellas entre los ataques con estrellas conocidas.
       - name: triple_rate_pct
@@ -294,13 +294,13 @@ models:
       - name: destruction_sum
         description: Suma de los porcentajes de destrucción informados en la ronda.
       - name: attacks_available
-        description: Cupo total de ataques del clan en la ronda.
+        description: Cupo del clan en guerras de la ronda con ataques de marcador informados y cupo positivo.
       - name: attacks_used
-        description: Ataques detallados registrados para el clan en la ronda.
+        description: Ataques del clan según el marcador de las mismas guerras incluidas en el cupo de la ronda.
       - name: avg_destruction_pct
         description: Destrucción media por guerra con ese dato en la ronda.
       - name: attack_usage_pct
-        description: Porcentaje del cupo de ataques utilizado en la ronda.
+        description: Ataques de marcador sobre el cupo incluido en la ronda. Nulo si ninguna guerra cumple.
       - name: cumulative_wars_played
         description: Guerras observadas desde el inicio hasta esta ronda, incluida.
       - name: cumulative_wars_with_result
@@ -312,15 +312,15 @@ models:
       - name: cumulative_destruction_sum
         description: Suma de los porcentajes de destrucción informados hasta esta ronda.
       - name: cumulative_attacks_available
-        description: Cupo total de ataques acumulado hasta esta ronda.
+        description: Cupo de las guerras con ataques de marcador informados y cupo positivo hasta esta ronda.
       - name: cumulative_attacks_used
-        description: Ataques detallados acumulados hasta esta ronda.
+        description: Ataques de marcador acumulados sobre las mismas guerras incluidas en el cupo acumulado.
       - name: cumulative_win_rate_pct
         description: Porcentaje de victorias entre las guerras acumuladas con resultado conocido.
       - name: cumulative_avg_destruction_pct
         description: Destrucción media entre las guerras acumuladas con ese dato.
       - name: cumulative_attack_usage_pct
-        description: Porcentaje del cupo acumulado utilizado en ataques registrados.
+        description: Ataques de marcador acumulados sobre el cupo acumulado. Nulo si ninguna guerra cumple.
       - name: id_group
         description: Identificador estable del grupo.
         data_tests:

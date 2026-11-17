@@ -1,17 +1,8 @@
 with cwl_results as (
-    select season, id_group, id_cwl_war, id_clan, round_number, result,
-        destruction_pct, attacks_available
+    select season, id_group, id_clan, round_number, result,
+        destruction_pct, attacks_available, attacks_used
     from {{ ref('fct_war_results') }}
     where war_type = 'cwl'
-),
-
-attacks_by_war as (
-    select
-        id_cwl_war,
-        id_attacker_clan as id_clan,
-        count(*) as attacks_used
-    from {{ ref('fct_cwl_attacks') }}
-    group by id_cwl_war, id_attacker_clan
 ),
 
 round_totals as (
@@ -25,12 +16,15 @@ round_totals as (
         count(case when w.result = 'win' then 1 end) as wins,
         count(w.destruction_pct) as wars_with_destruction,
         sum(w.destruction_pct) as destruction_sum,
-        sum(w.attacks_available) as attacks_available,
-        sum(coalesce(a.attacks_used, 0)) as attacks_used
+        sum(case
+            when w.attacks_used is not null and w.attacks_available > 0
+            then w.attacks_available
+        end) as attacks_available,
+        sum(case
+            when w.attacks_used is not null and w.attacks_available > 0
+            then w.attacks_used
+        end) as attacks_used
     from cwl_results w
-    left join attacks_by_war a
-        on w.id_cwl_war = a.id_cwl_war
-        and w.id_clan = a.id_clan
     group by w.season, w.id_group, w.id_clan, w.round_number
 ),
 

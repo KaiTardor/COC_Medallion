@@ -5,7 +5,16 @@ with results as (
 
 cwl as (
     select
-        r.*,
+        r.id_war_result,
+        r.war_type,
+        r.id_clan_war,
+        r.id_normal_war,
+        r.id_clan,
+        s.id_opponent_clan,
+        r.attacks_used,
+        r.stars,
+        r.destruction_pct,
+        r.result,
         w.id_cwl_war,
         w.id_group,
         w.round_number,
@@ -24,7 +33,19 @@ cwl as (
 
 normal as (
     select
-        r.*,
+        r.id_war_result,
+        r.war_type,
+        r.id_clan_war,
+        r.id_normal_war,
+        r.id_clan,
+        case
+            when r.id_clan = w.id_clan_a then w.id_clan_b
+            when r.id_clan = w.id_clan_b then w.id_clan_a
+        end as id_opponent_clan,
+        r.attacks_used,
+        r.stars,
+        r.destruction_pct,
+        r.result,
         null::varchar as id_cwl_war,
         null::varchar as id_group,
         null::integer as round_number,
@@ -35,8 +56,12 @@ normal as (
     inner join {{ ref('normal_wars') }} w
         on r.id_normal_war = w.id_normal_war
     where r.war_type = 'normal'
+),
+
+combined as (
+    select * from cwl
+    union all
+    select * from normal
 )
 
-select * from cwl
-union all
-select * from normal
+select * from combined

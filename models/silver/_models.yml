@@ -342,14 +342,6 @@ models:
               arguments:
                 to: ref('clans')
                 field: id_clan
-      - name: id_opponent_clan
-        description: Clan rival en ese enfrentamiento.
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('clans')
-                field: id_clan
       - name: attacks_used
         description: Cantidad de ataques realizados por el clan.
       - name: stars

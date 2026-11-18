@@ -14,7 +14,7 @@ attacks as (
 ),
 
 results as (
-    select id_war_result, war_type, id_clan_war, id_normal_war, id_clan, id_opponent_clan
+    select id_war_result, war_type, id_clan_war, id_normal_war, id_clan
     from {{ ref('war_results') }}
 ),
 
@@ -73,8 +73,7 @@ issues as (
       and (
           r.id_normal_war is not null
           or s.id_clan_war is null
-          or r.id_clan <> s.id_clan
-          or r.id_opponent_clan <> s.id_opponent_clan
+          or r.id_clan is distinct from s.id_clan
       )
 
     union all
@@ -87,12 +86,9 @@ issues as (
       and (
           r.id_clan_war is not null
           or w.id_normal_war is null
-          or not (
-              (r.id_clan = w.id_clan_a and r.id_opponent_clan = w.id_clan_b)
-              or (r.id_clan = w.id_clan_b and r.id_opponent_clan = w.id_clan_a)
-          )
+          or r.id_clan is null
+          or (r.id_clan is distinct from w.id_clan_a and r.id_clan is distinct from w.id_clan_b)
       )
 )
 
-select *
-from issues
+select * from issues

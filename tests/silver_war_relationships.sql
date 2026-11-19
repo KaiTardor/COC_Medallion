@@ -1,21 +1,13 @@
 with sides as (
-    select id_clan_war, id_cwl_war, id_clan, id_opponent_clan
-    from {{ ref('clan_wars') }}
+    select s.id_war_clan, s.id_cwl_war, g.id_clan, g.id_group
+    from {{ ref('cwl_war_clans') }} s
+    left join {{ ref('group_clans') }} g on s.id_group_clan = g.id_group_clan
 ),
 
 participants as (
-    select id_participation, id_cwl_war, id_clan
-    from {{ ref('cwl_war_participants') }}
-),
-
-attacks as (
-    select id_attack, id_cwl_war, id_attacker_participation, id_defender_participation
-    from {{ ref('attacks_defenses') }}
-),
-
-results as (
-    select id_war_result, war_type, id_clan_war, id_normal_war, id_clan
-    from {{ ref('war_results') }}
+    select p.id_participation, p.id_player, s.id_cwl_war, s.id_war_clan
+    from {{ ref('cwl_war_participants') }} p
+    inner join sides s on p.id_war_clan = s.id_war_clan
 ),
 
 issues as (
@@ -23,72 +15,40 @@ issues as (
     from {{ ref('cwl_wars') }} w
     left join sides s on w.id_cwl_war = s.id_cwl_war
     group by w.id_cwl_war
-    having count(distinct s.id_clan) <> 2
+    having count(s.id_war_clan) <> 2 or count(distinct s.id_clan) <> 2
 
     union all
 
-    select 'cwl_side_outside_group', s.id_clan_war
+    select 'cwl_side_outside_group', s.id_war_clan
     from sides s
-    inner join {{ ref('cwl_wars') }} w
-        on s.id_cwl_war = w.id_cwl_war
-    left join {{ ref('group_clans') }} g
-        on w.id_group = g.id_group and s.id_clan = g.id_clan
-    where g.id_group_clan is null or s.id_clan = s.id_opponent_clan
+    inner join {{ ref('cwl_wars') }} w on s.id_cwl_war = w.id_cwl_war
+    where s.id_group is distinct from w.id_group
 
     union all
 
-    select 'participant_without_side', p.id_participation
-    from participants p
-    left join sides s
-        on p.id_cwl_war = s.id_cwl_war and p.id_clan = s.id_clan
-    where s.id_clan_war is null
-
-    union all
-
-    select 'attack_participants_mismatch', a.id_attack
-    from attacks a
-    left join participants p
-        on a.id_attacker_participation = p.id_participation
-    left join participants d
-        on a.id_defender_participation = d.id_participation
-    where p.id_participation is null
-       or d.id_participation is null
-       or a.id_cwl_war <> p.id_cwl_war
-       or a.id_cwl_war <> d.id_cwl_war
-       or p.id_clan = d.id_clan
-
-    union all
-
-    select 'repeated_cwl_attacker', id_attacker_participation
-    from attacks
-    group by id_attacker_participation
+    select 'player_repeated_in_war', min(id_participation)
+    from participants
+    group by id_cwl_war, id_player
     having count(*) > 1
 
     union all
 
-    select 'invalid_cwl_result', r.id_war_result
-    from results r
-    left join sides s on r.id_clan_war = s.id_clan_war
-    where r.war_type = 'cwl'
-      and (
-          r.id_normal_war is not null
-          or s.id_clan_war is null
-          or r.id_clan is distinct from s.id_clan
-      )
+    select 'attack_participants_mismatch', a.id_attack
+    from {{ ref('attacks_defenses') }} a
+    left join participants p on a.id_attacker_participation = p.id_participation
+    left join participants d on a.id_defender_participation = d.id_participation
+    where a.id_cwl_war is distinct from p.id_cwl_war
+       or a.id_cwl_war is distinct from d.id_cwl_war
+       or p.id_war_clan = d.id_war_clan
 
     union all
 
-    select 'invalid_normal_result', r.id_war_result
-    from results r
-    left join {{ ref('normal_wars') }} w
-        on r.id_normal_war = w.id_normal_war
-    where r.war_type = 'normal'
-      and (
-          r.id_clan_war is not null
-          or w.id_normal_war is null
-          or r.id_clan is null
-          or (r.id_clan is distinct from w.id_clan_a and r.id_clan is distinct from w.id_clan_b)
-      )
+    select 'normal_war_observation', id_normal_war
+    from {{ ref('normal_wars') }}
+    where not (observed_a or observed_b)
+       or id_clan_a = id_clan_b
+       or (not observed_a and (attacks_used_a is not null or exp_earned_a is not null))
+       or (not observed_b and (attacks_used_b is not null or exp_earned_b is not null))
 )
 
 select * from issues

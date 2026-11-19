@@ -1,16 +1,15 @@
--- Macro que genera el id mediante SHA-256 a partir de la clave de cada entidad
+-- ID numérico de la entidad a partir de los 64 bits inferiores de MD5.
 
 {% macro coc_id(entity, columns) -%}
     case
         when {{ columns | join(' is null or ') }} is null then null
-        else sha2(
+        else md5_number_lower64(
             to_json(array_construct(
                 '{{ entity }}'
                 {%- for column in columns %},
                 cast({{ column }} as varchar)
                 {%- endfor %}
-            )),
-            256
-        )
+            ))
+        )::number(20, 0)
     end
 {%- endmacro %}

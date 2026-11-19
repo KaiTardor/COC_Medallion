@@ -17,7 +17,8 @@ attack_rows as (
         {{ coc_id('player', ['a.value:defenderTag::varchar']) }} as id_defender_player,
         a.value:"order"::integer as attack_order,
         a.value:stars::integer as stars,
-        a.value:destructionPercentage::float as destruction_pct
+        a.value:destructionPercentage::float as destruction_pct,
+        a.value:duration::integer as duration
     from attackers p,
         lateral flatten(input => p.attacks_payload) a
 ),
@@ -31,7 +32,8 @@ attack_ids as (
         attacker_th,
         attack_order,
         stars,
-        destruction_pct
+        destruction_pct,
+        duration
     from attack_rows
 ),
 
@@ -44,6 +46,7 @@ classified as (
         a.attack_order,
         a.stars,
         a.destruction_pct,
+        a.duration,
         case
             when a.attacker_th is null or d.town_hall_level is null then null
             when a.attacker_th > d.town_hall_level then 'down-hit'

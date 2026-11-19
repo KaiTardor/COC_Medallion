@@ -1,11 +1,10 @@
 version: 2
 
 models:
+
   - name: dim_clan
     description: >
-      Catálogo compartido de clanes para los análisis de CWL y guerras normales.
-      Proporciona el tag original y el último nombre y nivel conocidos, con el
-      mes en el que se observó cada atributo.
+      Catálogo de clanes con el último nombre, nivel y escudo conocidos.
     columns:
       - name: id_clan
         description: Identificador estable del clan.
@@ -15,12 +14,10 @@ models:
         data_tests: [not_null, unique]
       - name: clan_name
         description: Último nombre conocido en las capturas.
-      - name: name_observed_season
-        description: Mes de la observación utilizada para elegir el nombre.
       - name: clan_level
-        description: Último nivel conocido en los grupos CWL capturados.
-      - name: level_observed_season
-        description: Temporada de la observación utilizada para elegir el nivel.
+        description: Último nivel conocido del clan.
+      - name: badge_url
+        description: Última URL conocida del escudo mediano del clan.
 
   - name: dim_cwl_group
     description: >
@@ -43,10 +40,6 @@ models:
         description: Código de origen de la división.
       - name: division_name
         description: Nombre con el que se puede mostrar la división en el informe.
-      - name: group_state
-        description: Estado del grupo en el momento de la captura.
-      - name: clan_count
-        description: Cantidad de clanes observados en el grupo.
 
   - name: fct_war_results
     description: >
@@ -65,10 +58,20 @@ models:
           - accepted_values:
               arguments:
                 values: [cwl, normal]
-      - name: id_clan_war
-        description: Identificador del bando en Silver para un resultado de CWL.
+      - name: id_war_clan
+        description: Bando CWL cuando el formato es cwl.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('cwl_war_clans')
+                field: id_war_clan
       - name: id_normal_war
-        description: Identificador del enfrentamiento para un resultado de guerra normal.
+        description: Guerra normal cuando el formato es normal.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('normal_wars')
+                field: id_normal_war
       - name: id_clan
         description: Clan desde cuya perspectiva se registra el resultado.
         data_tests:
@@ -118,6 +121,10 @@ models:
       Conserva la secuencia, las estrellas, la destrucción y los ayuntamientos
       observados en esa guerra. Permite estudiar el mismo evento desde la
       perspectiva del atacante o del defensor.
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [id_cwl_war, attack_order]
     columns:
       - name: id_attack
         description: Identificador estable del evento de ataque.

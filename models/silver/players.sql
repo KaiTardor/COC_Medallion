@@ -26,17 +26,17 @@ latest_names as (
     select
         id_player,
         player_tag,
-        player_name,
-        case when player_name is not null then season end as name_observed_season
+        player_name
     from observations
     qualify row_number() over (
         partition by id_player
-        order by (player_name is null), season desc nulls last, source_priority, player_name
+        order by (player_name is null), season desc nulls last, source_priority,
+            round_number desc nulls last, id_cwl_war, player_name
     ) = 1
 ),
 
 latest_levels as (
-    select id_player, town_hall_level, season as town_hall_observed_season
+    select id_player, town_hall_level
     from observations
     where town_hall_level is not null
     qualify row_number() over (
@@ -51,9 +51,7 @@ players as (
         n.id_player,
         n.player_tag,
         n.player_name,
-        n.name_observed_season,
-        l.town_hall_level,
-        l.town_hall_observed_season
+        l.town_hall_level
     from latest_names n
     left join latest_levels l on n.id_player = l.id_player
 )

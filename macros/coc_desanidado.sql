@@ -36,10 +36,13 @@ from ({{ coc_group_clans(groups_relation) }}) as gc,
 {% endmacro %}
 
 {% macro coc_war_participants(wars_relation) %}
-select
-    p.*,
-    {{ coc_id('participation', ['p.id_cwl_war', 'p.id_player']) }} as id_participation
-from (
+with finished_wars as (
+    select season, id_cwl_war, round_number, payload
+    from {{ wars_relation }}
+    where war_state = 'warEnded'
+),
+
+members as (
     select
         w.season,
         w.id_cwl_war,
@@ -47,19 +50,24 @@ from (
         s.value:tag::varchar as clan_tag,
         m.value:tag::varchar as player_tag,
         m.value:name::varchar as player_name,
-        coalesce(
-            m.value:townhallLevel,
-            m.value:townHallLevel
-        )::integer as town_hall_level,
+        coalesce(m.value:townhallLevel, m.value:townHallLevel)::integer as town_hall_level,
         m.value:mapPosition::integer as map_position,
         m.value:attacks as attacks_payload,
+        m.value:opponentAttacks::integer as attacks_received,
         {{ coc_id('clan', ['s.value:tag::varchar']) }} as id_clan,
         {{ coc_id('player', ['m.value:tag::varchar']) }} as id_player
-    from {{ wars_relation }} w,
-        lateral flatten(
-            input => array_construct(w.payload:clan, w.payload:opponent)
-        ) s,
+    from finished_wars w,
+        lateral flatten(input => array_construct(w.payload:clan, w.payload:opponent)) s,
         lateral flatten(input => s.value:members) m
-    where w.war_state = 'warEnded'
-) as p
+),
+
+keyed_war_members as (
+    select
+        m.*,
+        {{ coc_id('participation', ['m.id_cwl_war', 'm.id_player']) }} as id_participation,
+        {{ coc_id('clan_war', ['m.id_cwl_war', 'm.id_clan']) }} as id_war_clan
+    from members m
+)
+
+select * from keyed_war_members
 {% endmacro %}

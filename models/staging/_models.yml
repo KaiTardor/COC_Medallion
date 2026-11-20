@@ -3,7 +3,7 @@ version: 2
 models:
   - name: stg_groups
     description: >
-      Prepara los grupos de competición de CWL capturados en Bronze. Identifica
+      Prepara los grupos de competición en la CWL. Identifica
       cada grupo dentro de su temporada, recupera su división y conserva el JSON
       que Silver utiliza para extraer los clanes inscritos y sus plantillas.
     columns:
@@ -11,10 +11,10 @@ models:
         description: Mes de referencia de la temporada CWL, en formato AAAA-MM.
         data_tests: [not_null]
       - name: group_id
-        description: Identificador del grupo en la captura, dentro de la temporada.
+        description: Id del grupo en la captura, dentro de dicha temporada.
         data_tests: [not_null]
       - name: division_id
-        description: Identificador de la división registrada en el origen.
+        description: Id de la división registrada en el origen.
       - name: division_name
         description: Nombre de la división en la captura.
       - name: source_path
@@ -22,35 +22,35 @@ models:
       - name: payload
         description: JSON del grupo, con los clanes inscritos, sus jugadores y las rondas.
       - name: id_season
-        description: Identificador estable de la temporada, calculado a partir de season.
+        description: Id de la temporada, calculado a partir de season.
         data_tests: [not_null]
       - name: id_division
-        description: Identificador estable de la división, calculado a partir de division_id.
+        description: Id de la división, calculado a partir de division_id.
       - name: id_group
-        description: Identificador estable calculado a partir de la temporada y el grupo de origen.
+        description: Id calculado a partir de la temporada y el grupo de origen.
         data_tests: [not_null, unique]
 
   - name: stg_cwl_wars
     description: >
       Prepara los enfrentamientos de CWL capturados en Bronze. Relaciona cada
       guerra con su grupo y ronda, identifica los dos bandos y conserva el JSON
-      que Silver utiliza para extraer los marcadores, las alineaciones y los ataques.
+      para los distintos casos de uso (results, ataques, etc).
     columns:
       - name: season
         description: Mes de referencia de la temporada CWL, en formato AAAA-MM.
         data_tests: [not_null]
       - name: war_tag
-        description: Tag original asignado a la guerra por la API.
+        description: Tag original asignado a la guerra por la API oficial.
         data_tests: [not_null, unique]
       - name: group_id
-        description: Identificador de origen del grupo en el que se disputó la guerra.
+        description: Id de origen del grupo en el que se disputó la guerra.
         data_tests: [not_null]
       - name: round_number
-        description: Número de ronda del enfrentamiento dentro del grupo.
+        description: Num de ronda del enfrentamiento dentro del grupo.
       - name: team_size
-        description: Número de jugadores que puede alinear cada bando.
+        description: Num de jugadores que puede alinear cada bando.
       - name: war_state
-        description: Estado de la guerra en la captura. El valor warEnded indica que finalizó.
+        description: Estado de la guerra. Puede indicar en progreso o finalizado.
       - name: clan_tag
         description: Tag del bando registrado como clan en el JSON de la guerra.
         data_tests: [not_null]
@@ -62,47 +62,47 @@ models:
       - name: payload
         description: JSON de la guerra, con ambos bandos y sus alineaciones y ataques.
       - name: id_season
-        description: Identificador estable que comparte con el grupo de la misma temporada.
+        description: Id que comparte con el grupo de la misma temporada.
         data_tests: [not_null]
       - name: id_group
-        description: Identificador estable que enlaza el enfrentamiento con su grupo.
+        description: Id que enlaza el enfrentamiento con su grupo.
         data_tests: [not_null]
       - name: id_cwl_war
-        description: Identificador estable de la guerra, calculado a partir de war_tag.
+        description: Id de la guerra, calculado a partir de war_tag.
         data_tests: [not_null, unique]
 
   - name: stg_normal_wars
     description: >
-      Prepara las entradas de los historiales de guerras normales. Conserva el
+      Prepara el historial de las guerras normales de cada clan. Conserva el
       resultado y las métricas desde la perspectiva del clan cuyo historial se
-      consultó. Calcula un identificador común para reconocer el enfrentamiento
+      consultó. Calcula un Id común para reconocer el enfrentamiento
       cuando aparece en los historiales de ambos clanes.
     columns:
       - name: season
         description: Mes de cierre UTC registrado en Bronze, en formato AAAA-MM.
         data_tests: [not_null]
       - name: war_id
-        description: Identificador del enfrentamiento registrado en la captura de origen.
+        description: Id del enfrentamiento registrado en la captura de origen.
         data_tests: [not_null]
       - name: clan_tag
         description: Tag del clan cuyo historial se consultó.
         data_tests: [not_null]
       - name: opponent_tag
-        description: Tag del rival del clan observado.
+        description: Tag del oponete del clan observado.
         data_tests: [not_null]
       - name: end_time_utc
         description: Fecha y hora de cierre de la guerra.
       - name: result
-        description: Resultado del clan observado, con valores win, lose o tie.
+        description: Resultado de la guerra desde el clan observado, con valores win, lose o tie.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values: [win, lose, tie]
       - name: team_size
-        description: Número de jugadores que puede alinear cada bando.
+        description: Num de jugadores que puede alinear cada bando.
       - name: attacks_per_member
-        description: Número de ataques permitidos por jugador alineado.
+        description: Num de ataques permitidos por jugador alineado.
       - name: attacks_used
         description: Cantidad de ataques realizados por el clan observado.
       - name: stars
@@ -114,13 +114,13 @@ models:
       - name: payload
         description: JSON de la entrada del historial con los datos y el resumen de la guerra.
       - name: id_clan
-        description: Identificador estable del clan cuyo historial se consultó.
+        description: Id del clan cuyo historial se consultó.
         data_tests: [not_null]
       - name: id_opponent_clan
-        description: Identificador estable del clan rival.
+        description: Id del clan rival.
         data_tests: [not_null]
       - name: id_normal_war
-        description: Identificador estable calculado con el cierre UTC y los tags ordenados.
+        description: Id calculado con el cierre UTC y los tags ordenados.
         data_tests: [not_null]
       - name: end_time_key
         description: Representación canónica del cierre en UTC utilizada para calcular el ID.
@@ -131,8 +131,8 @@ models:
 
   - name: stg_normal_war_coverage
     description: >
-      Prepara el registro de consultas a los historiales de guerras normales.
-      Conserva el estado de cada consulta, los registros capturados y el alcance
+      Prepara y conserva el estado de las consultas del registro de los historiales 
+      de guerras normales. Conserva el estado, los registros capturados y el alcance
       temporal del historial. Silver usa estos datos para distinguir una búsqueda
       correcta sin guerras de un historial que no se pudo consultar.
     columns:
@@ -147,7 +147,7 @@ models:
       - name: error_reason
         description: Motivo del fallo de la consulta, cuando está disponible.
       - name: records_captured
-        description: Número de registros de guerra informado por la captura para el mes consultado.
+        description: Num de registros de guerra informado por la captura para el mes consultado.
       - name: oldest_log_day
         description: Fecha UTC del registro más antiguo disponible en el historial consultado.
       - name: newest_log_day
@@ -155,5 +155,5 @@ models:
       - name: history_reaches_month_start
         description: Indica si el historial observado llega al primer día del mes o más atrás.
       - name: id_clan
-        description: Identificador estable calculado a partir del tag del clan consultado.
+        description: Id calculado a partir del tag del clan consultado.
         data_tests: [not_null]

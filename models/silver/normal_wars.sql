@@ -1,6 +1,6 @@
 {{ config(
     materialized='incremental',
-    incremental_strategy='coc_war_merge',
+    incremental_strategy='merge',
     unique_key='id_normal_war',
     on_schema_change='ignore',
     tmp_relation_type='table'
@@ -83,7 +83,7 @@ wars as (
 ),
 
 model_rows as (
-    {{ coc_war_rows('wars', 'id_normal_war', 'id_normal_war') }}
+    {{ coc_war_rows('wars', 'id_normal_war') }}
 )
 
 select * from model_rows

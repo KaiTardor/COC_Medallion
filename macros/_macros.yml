@@ -34,3 +34,38 @@ macros:
     arguments:
       - name: wars_relation
         description: Relación con las guerras CWL, normalmente stg_cwl_wars.
+      - name: wars_are_finished
+        type: bool
+        description: >
+          Con false (valor por defecto), filtra por warEnded. Usa true si la
+          entrada ya contiene solo guerras finalizadas.
+
+  - name: coc_wars_to_process
+    description: >
+      Calcula una huella por guerra a partir del CTE war_inputs. En un run
+      incremental, identifica guerras nuevas o con una huella distinta a la
+      guardada en destino.
+    arguments:
+      - name: war_key
+        description: Columna que identifica la guerra.
+      - name: hash_columns
+        description: Columnas o expresiones SQL que intervienen en la huella.
+
+  - name: coc_war_rows
+    description: >
+      Añade a las filas recalculadas la huella de la guerra correspondiente.
+    arguments:
+      - name: rows_cte
+        description: Nombre del CTE con las filas recalculadas.
+      - name: war_key
+        description: Columna que identifica la guerra.
+
+  - name: generate_schema_name
+    description: >
+      Usa el esquema por capa en el target pro si el modelo define un esquema
+      personalizado. En los demás casos, usa el esquema del perfil.
+    arguments:
+      - name: custom_schema_name
+        description: Esquema personalizado configurado en dbt_project.yml o en el recurso.
+      - name: node
+        description: Nodo que proporciona dbt como parte de la firma de la macro.

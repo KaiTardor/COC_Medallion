@@ -1,3 +1,11 @@
+{{ config(
+    materialized='incremental',
+    incremental_strategy='coc_war_merge',
+    unique_key='id_war_clan',
+    on_schema_change='ignore',
+    tmp_relation_type='table'
+) }}
+
 with finished_wars as (
     select
         id_cwl_war,
@@ -31,11 +39,31 @@ scores as (
     from sides
 ),
 
-war_clans as (
+war_inputs as (
     select
         {{ coc_id('clan_war', ['s.id_cwl_war', 's.id_clan']) }} as id_war_clan,
         s.id_cwl_war,
         g.id_group_clan,
+        s.attacks_used,
+        s.stars,
+        s.destruction_pct,
+        s.opponent_stars,
+        s.opponent_destruction_pct
+    from scores s
+    left join {{ ref('group_clans') }} g
+        on s.id_group = g.id_group and s.id_clan = g.id_clan
+),
+
+{{ coc_wars_to_process('id_cwl_war', [
+    'id_war_clan', 'id_group_clan', 'attacks_used', 'stars',
+    'destruction_pct', 'opponent_stars', 'opponent_destruction_pct'
+]) }},
+
+war_clans as (
+    select
+        s.id_war_clan,
+        s.id_cwl_war,
+        s.id_group_clan,
         s.attacks_used,
         s.stars,
         s.destruction_pct,
@@ -48,9 +76,11 @@ war_clans as (
             when s.destruction_pct < s.opponent_destruction_pct then 'lose'
             else 'tie'
         end as result
-    from scores s
-    left join {{ ref('group_clans') }} g
-        on s.id_group = g.id_group and s.id_clan = g.id_clan
+    from selected_wars s
+),
+
+model_rows as (
+    {{ coc_war_rows('war_clans', 'id_cwl_war', 'id_war_clan') }}
 )
 
-select * from war_clans
+select * from model_rows

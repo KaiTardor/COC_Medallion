@@ -1,3 +1,11 @@
+{{ config(
+    materialized='incremental',
+    incremental_strategy='coc_war_merge',
+    unique_key='id_attack',
+    on_schema_change='ignore',
+    tmp_relation_type='table'
+) }}
+
 with attack_events as (
     select
         id_attack,
@@ -68,13 +76,58 @@ participants as (
     inner join group_clans g on s.id_group_clan = g.id_group_clan
 ),
 
+war_details as (
+    select w.id_cwl_war, w.id_group, m.month_start_date
+    from cwl_wars w
+    inner join cwl_groups g on w.id_group = g.id_group
+    inner join cwl_seasons m on g.id_season = m.id_season
+),
+
+-- Compare each input before joining each attack to its two participants.
+war_inputs as (
+    select
+        id_cwl_war,
+        'attack' as input_type,
+        hash(id_attack, attack_order, id_attacker_participation, id_defender_participation,
+             matchup, stars, destruction_pct) as input_hash
+    from attack_events
+
+    union all
+
+    select
+        id_cwl_war,
+        'participant',
+        hash(id_participation, id_player, town_hall_level, id_clan)
+    from participants
+
+    union all
+
+    select
+        id_cwl_war,
+        'war',
+        hash(id_group, month_start_date)
+    from war_details
+),
+
+{{ coc_wars_to_process('id_cwl_war', ['input_type', 'input_hash']) }},
+
+selected_attacks as (
+    select a.*
+    from attack_events a
+    where exists (
+        select 1
+        from selected_wars w
+        where w.id_cwl_war = a.id_cwl_war
+    )
+),
+
 attacks as (
     select
         a.id_attack,
         a.id_cwl_war,
         a.attack_order,
         w.id_group,
-        m.month_start_date,
+        w.month_start_date,
         p.id_player as id_attacker,
         d.id_player as id_defender,
         p.id_clan as id_attacker_clan,
@@ -84,14 +137,16 @@ attacks as (
         a.matchup,
         a.stars,
         a.destruction_pct
-    from attack_events a
+    from selected_attacks a
     inner join participants p
         on a.id_attacker_participation = p.id_participation and a.id_cwl_war = p.id_cwl_war
     inner join participants d
         on a.id_defender_participation = d.id_participation and a.id_cwl_war = d.id_cwl_war
-    inner join cwl_wars w on a.id_cwl_war = w.id_cwl_war
-    inner join cwl_groups g on w.id_group = g.id_group
-    inner join cwl_seasons m on g.id_season = m.id_season
+    inner join war_details w on a.id_cwl_war = w.id_cwl_war
+),
+
+model_rows as (
+    {{ coc_war_rows('attacks', 'id_cwl_war', 'id_attack') }}
 )
 
-select * from attacks
+select * from model_rows

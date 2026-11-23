@@ -39,10 +39,13 @@ models:
   coc_medallion:
     staging:
       +database: "{{ env_var('DBT_COC_SILVER_DB') }}"
+      +schema: staging
       +materialized: view
     silver:
       +database: "{{ env_var('DBT_COC_SILVER_DB') }}"
+      +schema: silver
       +materialized: table
     gold:
       +database: "{{ env_var('DBT_COC_GOLD_DB') }}"
+      +schema: gold
       +materialized: table

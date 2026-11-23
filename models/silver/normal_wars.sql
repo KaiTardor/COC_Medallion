@@ -1,4 +1,33 @@
-with captures as (
+{{ config(
+    materialized='incremental',
+    incremental_strategy='coc_war_merge',
+    unique_key='id_normal_war',
+    on_schema_change='ignore',
+    tmp_relation_type='table'
+) }}
+
+with war_inputs as (
+    select
+        id_normal_war,
+        end_time_utc,
+        clan_tag,
+        clan_a_tag,
+        id_clan,
+        id_opponent_clan,
+        team_size,
+        attacks_per_member,
+        war_id,
+        attacks_used,
+        stars,
+        destruction_pct,
+        payload,
+        result
+    from {{ ref('stg_normal_wars') }}
+),
+
+{{ coc_wars_to_process('id_normal_war', ['clan_tag', 'war_id', 'payload']) }},
+
+captures as (
     select
         id_normal_war,
         convert_timezone('UTC', end_time_utc) as end_time_utc,
@@ -15,7 +44,7 @@ with captures as (
         payload:opponent.stars::integer as opponent_stars,
         payload:opponent.destructionPercentage::float as opponent_destruction_pct,
         result
-    from {{ ref('stg_normal_wars') }}
+    from selected_wars
 ),
 
 wars as (
@@ -51,6 +80,10 @@ wars as (
         max(iff(not from_a, exp_earned, null)) as exp_earned_b
     from captures
     group by id_normal_war, end_time_utc, id_clan_a, id_clan_b
+),
+
+model_rows as (
+    {{ coc_war_rows('wars', 'id_normal_war', 'id_normal_war') }}
 )
 
-select * from wars
+select * from model_rows

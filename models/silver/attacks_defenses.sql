@@ -1,12 +1,34 @@
-with attackers as (
-    select id_cwl_war, id_participation, town_hall_level, attacks_payload
-    from ({{ coc_war_participants(ref('stg_cwl_wars')) }}) as extracted_participants
-    where array_size(attacks_payload) > 0
+{{ config(
+    materialized='incremental',
+    incremental_strategy='coc_war_merge',
+    unique_key='id_attack',
+    on_schema_change='ignore',
+    tmp_relation_type='table'
+) }}
+
+-- depends_on: {{ ref('cwl_war_participants') }}
+
+with war_inputs as (
+    select
+        id_cwl_war,
+        season,
+        round_number,
+        payload
+    from {{ ref('stg_cwl_wars') }}
+    where war_state = 'warEnded'
 ),
 
+{{ coc_wars_to_process('id_cwl_war', ['payload']) }},
+
 participants as (
-    select id_participation, town_hall_level
-    from {{ ref('cwl_war_participants') }}
+    select id_cwl_war, id_participation, town_hall_level, attacks_payload
+    from ({{ coc_war_participants('selected_wars', wars_are_finished=true) }}) as extracted_participants
+),
+
+attackers as (
+    select id_cwl_war, id_participation, town_hall_level, attacks_payload
+    from participants
+    where array_size(attacks_payload) > 0
 ),
 
 attack_rows as (
@@ -56,6 +78,10 @@ classified as (
     from attack_ids a
     left join participants d
         on a.id_defender_participation = d.id_participation
+),
+
+model_rows as (
+    {{ coc_war_rows('classified', 'id_cwl_war', 'id_attack') }}
 )
 
-select * from classified
+select * from model_rows

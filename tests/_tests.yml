@@ -1,0 +1,24 @@
+version: 2
+
+data_tests:
+  - name: staging_cwl_keys
+    description: >
+      Detecta grupos CWL duplicados, perspectivas repetidas de guerras
+      normales y guerras CWL cuyo grupo falta en Staging.
+
+  - name: silver_war_relationships
+    description: >
+      Comprueba que los bandos, jugadores y ataques de CWL estén
+      vinculados a la guerra correcta y que los datos de las guerras
+      normales cuadren con los bandos observados.
+
+  - name: silver_reconciliation
+    description: >
+      Comprueba que cada bando de CWL tenga el número esperado de
+      jugadores y que los ataques registrados cuadren con la alineación
+      y con el marcador, si está disponible.
+
+  - name: gold_war_result_perspectives
+    description: >
+      Comprueba que Gold tenga una fila por cada bando de CWL y por cada
+      bando observado de una guerra normal, con los IDs esperados.

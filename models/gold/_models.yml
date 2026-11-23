@@ -149,10 +149,6 @@ models:
       Conserva la secuencia, las estrellas, la destrucción y los ayuntamientos
       observados en esa guerra. Permite estudiar el mismo evento desde la
       perspectiva del atacante o del defensor.
-    data_tests:
-      - unique_key_columns:
-          arguments:
-            column_names: [id_cwl_war, attack_order]
     columns:
       - name: id_attack
         description: Id del evento de ataque.

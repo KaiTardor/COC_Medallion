@@ -35,11 +35,13 @@ from ({{ coc_group_clans(groups_relation) }}) as gc,
     lateral flatten(input => gc.roster_payload) m
 {% endmacro %}
 
-{% macro coc_war_participants(wars_relation) %}
+{% macro coc_war_participants(wars_relation, wars_are_finished=false) %}
 with finished_wars as (
     select season, id_cwl_war, round_number, payload
     from {{ wars_relation }}
+    {% if not wars_are_finished %}
     where war_state = 'warEnded'
+    {% endif %}
 ),
 
 members as (

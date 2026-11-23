@@ -1,0 +1,431 @@
+version: 2
+
+models:
+
+  - name: cwl_seasons
+    description: >
+      Calendario de las temporadas de CWL. Proporciona el mes de referencia para agrupar los grupos y para comparar ediciones.
+    columns:
+      - name: id_season
+        description: Id de la temporada.
+        data_tests: [not_null, unique]
+      - name: season
+        description: Mes de referencia de la temporada en formato AAAA-MM.
+        data_tests: [not_null, unique]
+      - name: month_start_date
+        description: Primer día del mes de referencia.
+
+  - name: leagues
+    description: >
+      Ligas o divisiones de CWL del propio juego. Desde la más baja que es Bronce III a Leyenda
+    columns:
+      - name: id_division
+        description: Id de la división.
+        data_tests: [not_null, unique]
+      - name: division_id_source
+        description: Identificador de división de la captura original.
+        data_tests: [not_null, unique]
+      - name: division_name
+        description: Nombre de la liga.
+
+  - name: clans
+    description: >
+      Catálogo de clanes capturados con su ultimo datos (nombres, datos, etc).
+    columns:
+      - name: id_clan
+        description: Id calculado a partir del tag del clan.
+        data_tests: [not_null, unique]
+      - name: clan_tag
+        description: CC y tag original del clan
+        data_tests: [not_null, unique]
+      - name: clan_name
+        description: Último nombre conocido del clan.
+      - name: clan_level
+        description: Último nivel conocido del clan.
+      - name: badge_url
+        description: Última URL conocida del escudo del clan.
+
+  - name: players
+    description: >
+      Catálogo de jugadores identificados en las inscripciones o alineaciones de CWL.
+      Con su ultima informacion, desde el nombre y nivel de th.
+    columns:
+      - name: id_player
+        description: Id calculado a partir del tag del jugador.
+        data_tests: [not_null, unique]
+      - name: player_tag
+        description: CC y tag original del jugador.
+        data_tests: [not_null, unique]
+      - name: player_name
+        description: Último nombre conocido del jugador.
+      - name: town_hall_level
+        description: Ultimo nivel del ayuntamiento conocido.
+
+  - name: cwl_groups
+    description: >
+      Reune el catalogo de grupos que participa en una CWL.
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [id_season, group_id_source]
+    columns:
+      - name: id_group
+        description: Id del grupo identificado.
+        data_tests: [not_null, unique]
+      - name: id_season
+        description: temporada en la que se participa el grupo.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('cwl_seasons')
+                field: id_season
+      - name: id_division
+        description: División registrada del grupo.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('leagues')
+                field: id_division
+      - name: group_id_source
+        description: Identificador del grupo en la captura original.
+        data_tests: [not_null]
+
+  - name: group_clans
+    description: >
+      Tabla intermedia que reune los catálogos de los 8 clanes participantes dentro de un grupo concreto de la CWL.
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [id_group, id_clan]
+    columns:
+      - name: id_group_clan
+        description: Id de la inscripción del clan en el grupo.
+        data_tests: [not_null, unique]
+      - name: id_group
+        description: Grupo en el que se inscribió el clan.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('cwl_groups')
+                field: id_group
+      - name: id_clan
+        description: Clan inscrito en el grupo.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('clans')
+                field: id_clan
+      - name: clan_level_observed
+        description: Nivel del clan en la captura del grupo.
+
+  - name: cwl_roster
+    description: >
+      Reune las plantillas de los clanes, compuestos por los jugadores a la hora de una CWL. Incluye
+      a todos los miembros y al cruzarlo con las alineaciones se ve la actividad.
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [id_group_clan, id_player]
+    columns:
+      - name: id_roster_entry
+        description: Id de la inscripción del jugador.
+        data_tests: [not_null, unique]
+      - name: id_group_clan
+        description: Inscripción del clan que presentó al jugador.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('group_clans')
+                field: id_group_clan
+      - name: id_player
+        description: Jugador inscrito por el clan.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('players')
+                field: id_player
+      - name: town_hall_level_observed
+        description: Ayuntamiento registrado en la plantilla del grupo.
+      - name: player_name_observed
+        description: Nombre del jugador registrado en la plantilla del grupo.
+
+  - name: cwl_wars
+    description: >
+      Reune las guerras dispuestas en la CWL. Contiene info para identifica la ronda, el grupo
+      y las reglas especificas de una guerra en CWL.
+    columns:
+      - name: id_cwl_war
+        description: Id calculado a partir del tag de guerra.
+        data_tests: [not_null, unique]
+      - name: id_group
+        description: Grupo de CWL al que pertenece el enfrentamiento.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('cwl_groups')
+                field: id_group
+      - name: war_tag
+        description: Tag original de la guerra asignado por la API.
+        data_tests: [not_null, unique]
+      - name: round_number
+        description: Num de ronda de la guerra dentro del grupo.
+      - name: team_size
+        description: Num de jugadores que puede alinear cada bando.
+      - name: attacks_per_member
+        description: Num de ataques permitidos por jugador alineado.
+
+  - name: normal_wars
+    description: >
+      Reune el historico de guerras de un clan por cierre UTC, contiene informacion de
+      acerca  del encuentro y de los resultados del enfrentamiento.
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [end_time_utc, id_clan_a, id_clan_b]
+    columns:
+      - name: id_normal_war
+        description: Id calculado con el cierre UTC y los tags ordenados.
+        data_tests: [not_null, unique]
+      - name: end_time_utc
+        description: Fecha y hora de finalización en UTC.
+        data_tests: [not_null]
+      - name: id_clan_a
+        description: Clan cuyo tag aparece primero al ordenar los dos bandos.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('clans')
+                field: id_clan
+      - name: id_clan_b
+        description: Clan cuyo tag aparece segundo al ordenar los dos bandos.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('clans')
+                field: id_clan
+      - name: team_size
+        description: Num de jugadores que puede alinear cada bando.
+      - name: attacks_per_member
+        description: Num de ataques permitidos por jugador alineado.
+      - name: war_id_source
+        description: >
+          Identificador del enfrentamiento en la captura original. Si aparecen
+          varias representaciones, se elige la primera en orden lexicográfico.
+        data_tests: [not_null, unique]
+      - name: observed_a
+        description: Se capturó el historial propio del clan A.
+        data_tests: [not_null]
+      - name: attacks_used_a
+        description: Ataques declarados en el historial propio del clan A.
+      - name: stars_a
+        description: Estrellas finales del clan A.
+      - name: destruction_pct_a
+        description: Porcentaje final de destrucción del clan A.
+      - name: exp_earned_a
+        description: Experiencia ganada según el historial propio del clan A.
+      - name: result_a
+        description: Resultado desde el punto de vista del clan A.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [win, lose, tie]
+      - name: observed_b
+        description: Se capturó el historial propio del clan B.
+        data_tests: [not_null]
+      - name: attacks_used_b
+        description: Ataques declarados en el historial propio del clan B.
+      - name: stars_b
+        description: Estrellas finales del clan B.
+      - name: destruction_pct_b
+        description: Porcentaje final de destrucción del clan B.
+      - name: exp_earned_b
+        description: Experiencia ganada según el historial propio del clan B.
+
+  - name: cwl_war_clans
+    description: >
+      Reune el encuentro de dos clanes en un grupo especifico y la relaciona con la guerra disputada
+      y contiene el resultado de ello.
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [id_cwl_war, id_group_clan]
+    columns:
+      - name: id_war_clan
+        description: Id del bando dentro de la guerra.
+        data_tests: [not_null, unique]
+      - name: id_cwl_war
+        description: Enfrentamiento CWL del marcador.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('cwl_wars')
+                field: id_cwl_war
+      - name: id_group_clan
+        description: Inscripción del clan en el grupo de la guerra.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('group_clans')
+                field: id_group_clan
+      - name: attacks_used
+        description: Ataques realizados por el clan.
+      - name: stars
+        description: Estrellas del clan en el marcador final.
+      - name: destruction_pct
+        description: Porcentaje de destrucción del clan, de 0 a 100.
+      - name: result
+        description: Victoria, derrota o empate del clan. Puede faltar si el marcador es insuficiente.
+
+  - name: cwl_war_participants
+    description: >
+      Contiene el catalogo de jugadores que participan en una CWL concreta, con su datos 
+      (posicion, nivel de th, etc) 
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [id_war_clan, id_player]
+    columns:
+      - name: id_participation
+        description: Id de la participación del jugador en la guerra.
+        data_tests: [not_null, unique]
+      - name: id_war_clan
+        description: Bando por el que se alineó el jugador.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('cwl_war_clans')
+                field: id_war_clan
+      - name: id_player
+        description: Jugador que figura en la alineación.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('players')
+                field: id_player
+      - name: town_hall_level
+        description: Ayuntamiento registrado en la alineación de la guerra.
+      - name: map_position
+        description: Posición del jugador en el mapa de su bando.
+      - name: attacks_used
+        description: Ataques realizados por el jugador. Vale cero si se alineó y no atacó.
+      - name: attacks_received
+        description: Ataques recibidos por la base según opponentAttacks.
+      - name: player_name_observed
+        description: Nombre del jugador en la captura de la alineación.
+
+  - name: attacks_defenses
+    description: >
+      Catalogo de eventos de ataque / defensa en guerras CWL. Involucra siempre dos miembros de dos clanes
+      distintos y reune el suceso ocurrido.
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [id_cwl_war, attack_order]
+    columns:
+      - name: id_attack
+        description: Id del ataque dentro de la guerra.
+        data_tests: [not_null, unique]
+      - name: id_cwl_war
+        description: Guerra en la que ocurrió el ataque.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('cwl_wars')
+                field: id_cwl_war
+      - name: id_attacker_participation
+        description: Participación del jugador que realizó el ataque.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('cwl_war_participants')
+                field: id_participation
+      - name: id_defender_participation
+        description: Participación del jugador cuya base recibió el ataque.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('cwl_war_participants')
+                field: id_participation
+      - name: attack_order
+        description: Posición del ataque en la secuencia registrada por la API.
+        data_tests: [not_null]
+      - name: stars
+        description: Estrellas obtenidas por el atacante en el evento.
+      - name: destruction_pct
+        description: Porcentaje de destrucción conseguido en el ataque, de 0 a 100.
+      - name: duration
+        description: Duración informada por la API.
+      - name: matchup
+        description: >
+          Diferencia de ayuntamiento desde la perspectiva del atacante.
+          down-hit indica que el atacante tenía un nivel superior, same-TH
+          que tenían el mismo y up-hit que el atacante tenía un nivel inferior.
+          Queda nulo si falta algún nivel.
+
+  - name: normal_war_coverage
+    description: >
+      Ultimo intento de laS cobertura acreditada por las capturas correctas.
+    data_tests:
+      - unique_key_columns:
+          arguments:
+            column_names: [season, id_clan]
+    columns:
+      - name: id_coverage
+        description: Id del control de cobertura por clan y mes.
+        data_tests: [not_null, unique]
+      - name: season
+        description: Mes consultado, en formato AAAA-MM y con referencia UTC.
+        data_tests: [not_null]
+      - name: id_clan
+        description: Clan cuyo historial se consultó.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('clans')
+                field: id_clan
+      - name: fetched_at_utc
+        description: Fecha y hora de la captura en UTC.
+        data_tests: [not_null]
+      - name: status
+        description: Estado informado por el proceso de captura, como ok o http_403.
+        data_tests: [not_null]
+      - name: error_reason
+        description: Motivo del fallo registrado durante la consulta, si está disponible.
+      - name: history_accessible
+        description: Indica si la consulta al historial terminó correctamente.
+      - name: last_success_at_utc
+        description: Fecha UTC de la última consulta correcta para este clan y mes.
+      - name: coverage_status
+        description: >
+          complete si alguna captura correcta posterior al cierre UTC alcanza el inicio del mes,
+          partial si hay alguna correcta, unknown si solo constan fallos.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['complete', 'partial', 'unknown']
+      - name: wars_recovered
+        description: Guerras de la última consulta correcta. Cero indica una captura vacía. Nulo si solo constan fallos.
+      - name: oldest_log_day
+        description: Fecha UTC más antigua del historial en la última consulta correcta.
+      - name: newest_log_day
+        description: Fecha UTC más reciente del historial en la última consulta correcta.
+      - name: history_reaches_month_start
+        description: Indica si la última consulta correcta alcanzó el primer día del mes.

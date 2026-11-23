@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: cwl_bronze
+    database: "{{ env_var('DBT_COC_BRONZE_DB') }}"
+    schema: BRONZE
+    tables:
+      - name: groups
+        identifier: CWL_GROUPS_RAW
+      - name: wars
+        identifier: CWL_WARS_RAW
+      - name: normal_wars
+        identifier: NORMAL_WARS_RAW
+      - name: normal_war_coverage
+        identifier: NORMAL_WAR_COVERAGE_RAW

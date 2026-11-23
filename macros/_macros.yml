@@ -1,0 +1,36 @@
+version: 2
+
+macros:
+  - name: coc_id
+    description: >
+      Genera un ID numérico determinista a partir de la entidad y los
+      valores indicados. Devuelve NULL si falta algún valor.
+    arguments:
+      - name: entity
+        description: Nombre de la entidad, como clan, player o attack.
+      - name: columns
+        description: Lista ordenada de columnas o expresiones SQL que forman la clave.
+
+  - name: coc_group_clans
+    description: >
+      Extrae una fila por clan de cada grupo CWL y conserva su lista
+      de jugadores para leerla después.
+    arguments:
+      - name: groups_relation
+        description: Relación con los grupos CWL, normalmente stg_groups.
+
+  - name: coc_roster
+    description: >
+      Extrae una fila por jugador inscrito en la plantilla de cada clan
+      dentro de un grupo CWL.
+    arguments:
+      - name: groups_relation
+        description: Relación con los grupos CWL, normalmente stg_groups.
+
+  - name: coc_war_participants
+    description: >
+      Extrae una fila por jugador alineado en cada guerra CWL finalizada,
+      con su bando, posición y datos de ataques.
+    arguments:
+      - name: wars_relation
+        description: Relación con las guerras CWL, normalmente stg_cwl_wars.

@@ -1,6 +1,6 @@
 {{ config(
     materialized='incremental',
-    incremental_strategy='coc_war_merge',
+    incremental_strategy='merge',
     unique_key='id_participation',
     on_schema_change='ignore',
     tmp_relation_type='table'
@@ -33,7 +33,7 @@ participants as (
 ),
 
 model_rows as (
-    {{ coc_war_rows('participants', 'id_cwl_war', 'id_participation') }}
+    {{ coc_war_rows('participants', 'id_cwl_war') }}
 )
 
 select * from model_rows
